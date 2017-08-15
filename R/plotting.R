@@ -24,7 +24,6 @@ theme_dayton <- function(base_size = 11, base_family = 'sans'){
                                                                                   color = "#3C3C3C",
                                                                                   size = 20)
                                                   )
-                                          
                    dayton
 }
 
