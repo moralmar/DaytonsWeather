@@ -43,12 +43,15 @@ p1 <- ggplot() +
                        colour = "wheat2", 
                        alpha=.8)
 
-p2 <- create_base_plot(PastExtremes, 
+p2 <- create_base_plot(City, PastExtremes, 
                        DataYearX, 
                        YearXExtremes, 
                        YearPastMin, 
                        YearPastMax, 
-                       YearToday) + 
+                       YearToday) %>%
+        add_line_yearX(DataYearX) %>%
+        add_formatting(feb_days = 29, PastExtremes) %>%
+        add_ExtremePoints(YearXExtremes) +
         theme_dayton()
 
 gridExtra::grid.arrange(p1, p2)

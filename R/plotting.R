@@ -31,22 +31,22 @@ theme_dayton <- function(base_size = 11, base_family = 'sans'){
 
 
 
-create_base_plot <- function(df_PastExtremes, 
+create_base_plot <- function(City, df_PastExtremes, 
                              df_DataYearX, 
                              df_YearXExtremes, 
                              YearPastMin, 
                              YearPastMax, 
                              YearToday){
         
-        n_days <- nrow(df_DataYearX)
-        feb_days <- ifelse(n_days == 364, 28, 29)
-        feb_days <- 29
+        # n_days <- nrow(df_DataYearX)
+        # feb_days <- ifelse(n_days == 364, 28, 29)
+        # feb_days <- 29
         
         year_current <- max(df_DataYearX$Year) # Year to look at ("current year")
         
-        y_maxValue <- plyr::round_any(range(PastExtremes$PastHigh)[2], 10, f = ceiling)
+        y_maxValue <- plyr::round_any(range(df_PastExtremes$PastHigh)[2], 10, f = ceiling)
         
-        temp_value <- plyr::round_any(range(PastExtremes$PastHigh)[1], 10, f = floor)
+        temp_value <- plyr::round_any(range(df_PastExtremes$PastHigh)[1], 10, f = floor)
         y_minValue <- ifelse(temp_value > 0, 0, temp_value)
         
         
@@ -59,8 +59,83 @@ create_base_plot <- function(df_PastExtremes,
                 geom_linerange(df_PastExtremes, mapping = aes(x = seqDay,
                                                               ymin = PastAvgLow, 
                                                               ymax = PastAvgHigh),
-                               colour = "wheat4") +
-                geom_line(df_DataYearX, mapping = aes(x = seqDay, y = TempInC, group = 1)) +
+                               colour = "wheat4")
+                # geom_line(df_DataYearX, mapping = aes(x = seqDay, y = TempInC, group = 1)) +
+                # geom_vline(xintercept = 0, colour = "wheat4", linetype=1, size=1) +
+                # 
+                # geom_hline(yintercept = 0, colour = "white", linetype=1) +
+                # geom_hline(yintercept = 5, colour = "white", linetype=1) +
+                # geom_hline(yintercept = 10, colour = "white", linetype=1) +
+                # geom_hline(yintercept = 15, colour = "white", linetype=1) +
+                # geom_hline(yintercept = 20, colour = "white", linetype=1) +
+                # geom_hline(yintercept = 25, colour = "white", linetype=1) +
+                # geom_hline(yintercept = 30, colour = "white", linetype=1) +
+                # geom_hline(yintercept = 35, colour = "white", linetype=1) +
+                # geom_hline(yintercept = 40, colour = "white", linetype=1) +
+                # 
+                # geom_vline(xintercept = 31, colour = "wheat4", linetype=3, size=.5) +
+                # geom_vline(xintercept = 31 + feb_days, colour = "wheat4", linetype=3, size=.5) +
+                # geom_vline(xintercept = 2*31 + 0*30 + feb_days, colour = "wheat4", linetype=3, size=.5) +
+                # geom_vline(xintercept = 2*31 + 1*30 + feb_days, colour = "wheat4", linetype=3, size=.5) +
+                # geom_vline(xintercept = 3*31 + 1*30 + feb_days, colour = "wheat4", linetype=3, size=.5) +
+                # geom_vline(xintercept = 3*31 + 2*30 + feb_days, colour = "wheat4", linetype=3, size=.5) +
+                # geom_vline(xintercept = 4*31 + 2*30 + feb_days, colour = "wheat4", linetype=3, size=.5) +
+                # geom_vline(xintercept = 4*31 + 3*30 + feb_days, colour = "wheat4", linetype=3, size=.5) +
+                # geom_vline(xintercept = 5*31 + 3*30 + feb_days, colour = "wheat4", linetype=3, size=.5) +
+                # geom_vline(xintercept = 5*31 + 4*30 + feb_days, colour = "wheat4", linetype=3, size=.5) +
+                # geom_vline(xintercept = 6*31 + 4*30 + feb_days, colour = "wheat4", linetype=3, size=.5) +
+                # geom_vline(xintercept = 6*31 + 5*30 + feb_days, colour = "wheat4", linetype=3, size=.5) +
+                # 
+                # scale_x_continuous(expand = c(0,0),
+                #                    breaks = c(15, 45, 75, 105, 135, 165, 198, 228, 258, 288, 320, 350),
+                #                    position = "top",
+                #                    labels = c("January", "February", "March", "April",
+                #                               "May", "June", "July", "August", "September",
+                #                               "October", "November", "December")) +
+                # geom_point(data = df_YearXExtremes[df_YearXExtremes$recordLow == "Y", ], 
+                #            aes(x = seqDay, y = TempInC), color = "blue3") +
+                # geom_point(data = df_YearXExtremes[df_YearXExtremes$recordHigh == "Y", ], 
+                #            aes(x = seqDay, y = TempInC), color = "firebrick3") + 
+                
+                # ylim(y_minValue, y_maxValue) +
+                
+                # labs(x = "", y = expression("Temperature in "*~degree*C)) +
+                
+                # annotate("text", label = "Temperature", 
+                #          x = 19, y = y_maxValue - 0.5, size = 4, fontface="bold") +
+                # annotate("text", x = 68, y = y_maxValue - 2.5, 
+                #          label = "Data represents average daily temperatures. Accessible data dates back to", 
+                #          size=3, colour="gray30") +
+                # annotate("text", x = 63, y = y_maxValue - 4, 
+                #          label = "January 1, 1995. Data for 2014 is only available through December 16.", 
+                #          size=3, colour="gray30") +
+                # annotate("text", x = 67, y = y_maxValue - 5.5, 
+                #          label = "Average temperature for the year was 51.9° making 2014 the 9th coldest", 
+                #          size=3, colour="gray30") +
+                # annotate("text", x = 17, y = y_maxValue - 7, label = "year since 1995", 
+                #          size=3, colour="gray30")
+                
+                # ggtitle(paste0(City, "'s Weather in ", YearToday))
+        return(p1)
+}
+
+
+add_line_yearX <- function(gg_obj, df_DataYearX){
+        gg_obj + 
+                geom_line(df_DataYearX, 
+                          mapping = aes(x = seqDay, 
+                                        y = TempInC, 
+                                        group = 1))
+}
+
+add_formatting <- function(gg_obj, feb_days, df_PastExtremes){
+        
+        # pre-calculation
+        y_maxValue <- plyr::round_any(range(df_PastExtremes$PastHigh)[2], 10, f = ceiling)
+        temp_value <- plyr::round_any(range(df_PastExtremes$PastHigh)[1], 10, f = floor)
+        y_minValue <- ifelse(temp_value > 0, 0, temp_value)
+        
+        gg_obj + 
                 geom_vline(xintercept = 0, colour = "wheat4", linetype=1, size=1) +
                 
                 geom_hline(yintercept = 0, colour = "white", linetype=1) +
@@ -92,34 +167,20 @@ create_base_plot <- function(df_PastExtremes,
                                    labels = c("January", "February", "March", "April",
                                               "May", "June", "July", "August", "September",
                                               "October", "November", "December")) +
-                geom_point(data = df_YearXExtremes[df_YearXExtremes$recordLow == "Y", ], 
-                           aes(x = seqDay, y = TempInC), color = "blue3") +
-                geom_point(data = df_YearXExtremes[df_YearXExtremes$recordHigh == "Y", ], 
-                           aes(x = seqDay, y = TempInC), color = "firebrick3") + 
-                
                 ylim(y_minValue, y_maxValue) +
-                
                 labs(x = "", y = expression("Temperature in "*~degree*C)) +
-                
-                annotate("text", label = "Temperature", 
-                         x = 19, y = y_maxValue - 0.5, size = 4, fontface="bold") +
-                annotate("text", x = 68, y = y_maxValue - 2.5, 
-                         label = "Data represents average daily temperatures. Accessible data dates back to", 
-                         size=3, colour="gray30") +
-                annotate("text", x = 63, y = y_maxValue - 4, 
-                         label = "January 1, 1995. Data for 2014 is only available through December 16.", 
-                         size=3, colour="gray30") +
-                annotate("text", x = 67, y = y_maxValue - 5.5, 
-                         label = "Average temperature for the year was 51.9° making 2014 the 9th coldest", 
-                         size=3, colour="gray30") +
-                annotate("text", x = 17, y = y_maxValue - 7, label = "year since 1995", 
-                         size=3, colour="gray30") +
-                
-                ggtitle(paste("Dayton's Weather in ", YearToday))
-        return(p1)
+                ggtitle(paste0(City, "'s Weather in ", YearToday))
 }
 
 
+
+add_ExtremePoints <- function(gg_obj, df_YearXExtremes){
+        gg_obj + 
+                geom_point(data = df_YearXExtremes[df_YearXExtremes$recordLow == "Y", ], 
+                           aes(x = seqDay, y = TempInC), color = "blue3") +
+                geom_point(data = df_YearXExtremes[df_YearXExtremes$recordHigh == "Y", ], 
+                           aes(x = seqDay, y = TempInC), color = "firebrick3")
+}
 
 # not in use
 add_subtext <- function(){
