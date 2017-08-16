@@ -1,0 +1,489 @@
+---
+title: "Dayton's Weather - Milestone 1"
+author: "mmorales"
+date: "16-08-2017"
+# output: html_notebook   # word_document   # github_document  # pdf_document   # html_notebook
+output: 
+  html_document:
+    theme: journal
+    highlight: haddock
+    toc: true
+    toc_float:
+      collapsed: false
+      smooth_scroll: false
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+        echo = TRUE,
+        out.width = "100%",
+        dpi = 300,
+        fig.width = 8,
+        fig.height = 6,
+        strip.white = T, 
+        collapse = TRUE, 
+        comment = "#>"
+)
+
+# theme: cerulean (blue-ish titles), journal (very classy, good), united (also classy, but no), cosmo, 
+# highlight: tango (colorful), zenburn (black background), haddock (colorful and classy), 
+
+# `REMEMBER:`
+# ``to remember:``  
+# **to remember:**  
+# *to remember:*  
+# <span style="background:yellow">**`WORK IN PROGRESS`**</span>  
+
+# setup and initializing
+remove(list = ls(all.names = TRUE))
+cat("\014")
+```
+
+
+<span style="background:yellow">**`WORK IN PROGRESS`**</span>  
+
+## Introduction
+
+interesting links and sources:  
+- <https://www.edwardtufte.com/bboard/q-and-a-fetch-msg?msg_id=00014g>  
+- <http://academic.udayton.edu/kissock/http/Weather/>  
+- ...  
+
+TEXT  
+GAOLs  
+- analysing data  
+- recreating  
+- building shiney app  
+- main features: You can choose the city & You can choose the "years of interest"  
+- visualize all relevant cities on world map  
+- click on city to get this graph  
+
+Original graph from the New York Times (Weather Chart from January 2004, p. A-15)
+![alt text](https://www.edwardtufte.com/bboard/images/00014g-836.jpg)
+
+
+## Initiating 
+
+```{r, message=FALSE, warning=FALSE, include=FALSE}
+package <- function(pkgs, install=TRUE, update=FALSE, quiet=TRUE, verbose=TRUE, ...) {
+        myrequire <- function(package, ...) {
+                result <- FALSE
+                if(quiet) { 
+                        suppressMessages(suppressWarnings(result <- require(package, ...)))
+                } else {
+                        result <- suppressWarnings(require(package, ...))
+                }
+                return(result)
+        }
+        mymessage <- function(msg) {
+                if(verbose) {
+                        message(msg)
+                }
+        }
+        
+        installedpkgs <- installed.packages()
+        availpkgs <- available.packages()[,c('Package','Version')]
+        if(nrow(availpkgs) == 0) {
+                warning(paste0('There appear to be no packages available from the ',
+                               'repositories. Perhaps you are not connected to the ',
+                               'Internet?'))
+        }
+        # It appears that hyphens (-) will be replaced with dots (.) in version
+        # numbers by the packageVersion function
+        availpkgs[,'Version'] <- gsub('-', '.', availpkgs[,'Version'])
+        results <- data.frame(loaded=rep(FALSE, length(pkgs)),
+                              installed=rep(FALSE, length(pkgs)),
+                              loaded.version=rep(as.character(NA), length(pkgs)),
+                              available.version=rep(as.character(NA), length(pkgs)),
+                              stringsAsFactors=FALSE)
+        row.names(results) <- pkgs
+        for(i in pkgs) {
+                loadedPkgs <- search()
+                needInstall <- FALSE
+                if(i %in% row.names(installedpkgs)) {
+                        v <- as.character(packageVersion(i))
+                        if(i %in% row.names(availpkgs)) {
+                                if(v != availpkgs[i,'Version']) {
+                                        if(!update) {
+                                                mymessage(paste0('A newer version of ', i, 
+                                                                 ' is available ', '(current=', v, 
+                                                                 '; available=',
+                                                                 availpkgs[i,'Version'], ')'))
+                                        }
+                                        needInstall <- update
+                                }
+                                results[i,]$available.version <- availpkgs[i,'Version']
+                        } else {
+                                mymessage(paste0(i, ' is not available on the repositories.'))
+                        }
+                } else {
+                        if(i %in% row.names(availpkgs)) {
+                                needInstall <- TRUE & install
+                                results[i,]$available.version <- availpkgs[i,'Version']
+                        } else {
+                                warning(paste0(i, ' is not available on the repositories and ',
+                                               'is not installed locally'))
+                        }
+                }
+                if(needInstall | !myrequire(i, character.only=TRUE)) {
+                        install.packages(pkgs=i, quiet=quiet)
+                        if(!myrequire(i, character.only=TRUE, ...)) {
+                                warning(paste0('Error loading package: ', i))
+                        } else {
+                                results[i,]$installed <- TRUE
+                                results[i,]$loaded <- TRUE
+                                results[i,]$loaded.version <- as.character(packageVersion(i))
+                        }
+                } else {
+                        results[i,]$loaded <- TRUE
+                        results[i,]$loaded.version <- as.character(packageVersion(i))
+                }
+                loadedPkgs2 <- search()
+                for(j in loadedPkgs2[!loadedPkgs2 %in% loadedPkgs]) {
+                        try(detach(j, character.only=TRUE), silent=TRUE)
+                }
+        }
+        if(verbose) {
+                return(results)
+        } else {
+                invisible(results)
+        }
+}
+```
+
+
+```{r, warning=FALSE}
+pkgsName <- c("readr","magrittr","ggplot2","dplyr", "gridExtra")
+# (pkgs <- package(pkgsName))
+lapply(pkgsName, require, character.only = TRUE)
+```
+
+
+## Data - Exploring
+
+TEXT  
+Three functions which makes it easy to load the files
+```{r}
+
+make_filename <- function(CityABBR) {
+        filePathSep <- "/"
+        fileNamesep <- "."
+        fileExt <- "txt"
+        baseURL <- "http://academic.udayton.edu/kissock/http/Weather/gsod95-current"
+        
+        filename <- paste(CityABBR, fileExt, sep = fileNamesep)
+        finalURL <- paste(baseURL, filename, sep = filePathSep)
+        
+} # END make_filename()
+
+get_FileInfo <- function(CityFile, CountryABBR, City){
+        # start with an empty data frame:
+        #     not really needed if only one file is looked at
+        # df <- data.frame(name = c(), size = c()) 
+        fileInfo <- object.size(CityFile)
+        fileSizeInMb <- paste(round(fileInfo / 1024 / 1024, 2), "MB")
+        df <- data.frame(name = paste(CountryABBR, City), size = fileSizeInMb)
+} #END get_FileInfo
+
+
+read_and_load <- function(finalURL){
+        ext_tracks_colnames <- c("Month", "Day", "Year", "TempInF")
+        ext_tracks_widths <- c(8,9,17,17)
+        # data <- readr::read_fwf(finalURL) #col_names = FALSE
+        data <- readr::read_fwf(finalURL, 
+                                fwf_widths(ext_tracks_widths, 
+                                           ext_tracks_colnames)
+                                )
+        return(data)
+}
+```
+
+
+So, let's start with the city Cairo in Egypt:  
+- define input  
+- load the file
+```{r, message=FALSE, warning=FALSE}
+CountryABBR <- "EG"; City <- "CAIRO" #ensure: captial letters
+CityABBR <- paste0(CountryABBR, City)
+
+# make file name
+name <- make_filename(CityABBR)
+
+# read
+testfile <- read_and_load(name)
+(get_FileInfo(testfile, CountryABBR, City))
+head(testfile) # --simple as it can be
+```
+
+## Preparing the data
+
+TEXT  
+
+I defined the following functions:  
+- `get_YearData(data, YearsOfInterest)`  
+- `get_YearPastExtremes(PastData)`  
+- `get_ExtremesForYearX(PastYearExtremes, DataYearX)`  
+
+They are defined as follows: 
+
+```{r}
+get_YearData <- function(data, YearsOfInterest){
+
+        Past <- data %>%
+                dplyr::group_by(Year) %>%
+                dplyr::mutate(seqDay = seq(1, length(Day))) %>%
+                dplyr::ungroup() %>%
+                dplyr::filter(TempInF != -99 & Year %in% YearsOfInterest) %>% # missing values = -99
+                dplyr::group_by(seqDay) %>%
+                dplyr::mutate(TempInC = (TempInF - 32) / 1.8,
+                              upper = max(TempInC), 
+                              lower = min(TempInC),
+                              avg = mean(TempInC),
+                              se = sd(TempInC) / sqrt(length(TempInC)),
+                              avg_upper = avg + (2.101 * se),
+                              avg_lower = avg - (2.101 * se)) %>%
+                ungroup()
+}
+
+get_YearPastExtremes <- function(PastData){
+        Low <- PastData %>%
+                dplyr::group_by(seqDay) %>%
+                dplyr::summarise(PastLow = min(TempInC),
+                                 PastHigh = max(TempInC),
+                                 PastAvg = mean(TempInC),
+                                 PastSe = sd(TempInC) / sqrt(length(TempInC)),
+                                 PastAvgLow = PastAvg - (2.101 * PastSe),
+                                 PastAvgHigh = PastAvg + (2.101 * PastSe))
+}
+
+
+get_ExtremesForYearX <- function(PastYearExtremes, DataYearX){
+      
+        
+        Low_YearX <- DataYearX %>%
+                dplyr::left_join(PastYearExtremes) %>%
+                mutate(recordLow = ifelse(TempInC < PastLow, "Y", "N"),
+                       recordHigh = ifelse(TempInC >= PastHigh, "Y", "N"))
+                
+}
+```
+
+
+So the routine looks like this:
+
+```{r}
+YearToday <- 2014L
+YearPastMin <- min(testfile$Year)
+YearPastMax <- YearToday - 1
+
+PastData <- get_YearData(testfile, YearPastMin:YearPastMax)
+DataYearX <- get_YearData(testfile, YearToday)
+
+PastExtremes <- get_YearPastExtremes(PastData)
+
+head(PastExtremes)
+tail(PastExtremes)
+
+YearXExtremes <- get_ExtremesForYearX(PastExtremes, DataYearX)
+```
+
+## Plotting Evolution
+
+TEXT
+
+### Graph 1
+
+TEXT
+
+```{r}
+p1 <- ggplot() + 
+        geom_linerange(PastExtremes, mapping = aes(x = seqDay, 
+                                         ymin = PastLow, 
+                                         ymax = PastHigh), 
+                       colour = "wheat2", 
+                       alpha=.8)
+p1
+```
+
+### Graph 2
+
+TEXT
+
+(I'd like to have here an evolution....adding confidence interval, etc.)
+
+## Final Plot
+
+I am not (yet) showing the plotting functions, which I am using...
+(it's just a lot of code....not that interesting)...  
+This is not yet the final product...  
+Work in Progress  
+
+```{r, include=FALSE}
+theme_dayton <- function(base_size = 11, base_family = 'sans'){
+        dayton <- ggplot2::theme_minimal(base_size = base_size, 
+                                           base_family = base_family) +
+                                                  theme(panel.grid.major = element_blank(),
+                                                        panel.grid.minor = element_blank(),
+                                                        axis.ticks = element_blank(),
+                                                        plot.title = element_text(face = "bold",
+                                                                                  hjust = 0.012,
+                                                                                  vjust = 0.8,
+                                                                                  color = "#3C3C3C",
+                                                                                  size = 20)
+                                                  )
+                   dayton
+}
+
+
+
+
+
+create_base_plot <- function(df_PastExtremes, 
+                             df_DataYearX, 
+                             df_YearXExtremes, 
+                             YearPastMin, 
+                             YearPastMax, 
+                             YearToday){
+        
+        n_days <- nrow(df_DataYearX)
+        feb_days <- ifelse(n_days == 364, 28, 29)
+        feb_days <- 29
+        
+        year_current <- max(df_DataYearX$Year) # Year to look at ("current year")
+        
+        y_maxValue <- plyr::round_any(range(PastExtremes$PastHigh)[2], 10, f = ceiling)
+        
+        temp_value <- plyr::round_any(range(PastExtremes$PastHigh)[1], 10, f = floor)
+        y_minValue <- ifelse(temp_value > 0, 0, temp_value)
+        
+        
+        p1 <- ggplot() + 
+                geom_linerange(df_PastExtremes, mapping = aes(x = seqDay, 
+                                                           ymin = PastLow, 
+                                                           ymax = PastHigh), 
+                               colour = "wheat2", 
+                               alpha = 1) +
+                geom_linerange(df_PastExtremes, mapping = aes(x = seqDay,
+                                                              ymin = PastAvgLow, 
+                                                              ymax = PastAvgHigh),
+                               colour = "wheat4") +
+                geom_line(df_DataYearX, mapping = aes(x = seqDay, y = TempInC, group = 1)) +
+                geom_vline(xintercept = 0, colour = "wheat4", linetype=1, size=1) +
+                
+                geom_hline(yintercept = 0, colour = "white", linetype=1) +
+                geom_hline(yintercept = 5, colour = "white", linetype=1) +
+                geom_hline(yintercept = 10, colour = "white", linetype=1) +
+                geom_hline(yintercept = 15, colour = "white", linetype=1) +
+                geom_hline(yintercept = 20, colour = "white", linetype=1) +
+                geom_hline(yintercept = 25, colour = "white", linetype=1) +
+                geom_hline(yintercept = 30, colour = "white", linetype=1) +
+                geom_hline(yintercept = 35, colour = "white", linetype=1) +
+                geom_hline(yintercept = 40, colour = "white", linetype=1) +
+                
+                geom_vline(xintercept = 31, colour = "wheat4", linetype=3, size=.5) +
+                geom_vline(xintercept = 31 + feb_days, colour = "wheat4", linetype=3, size=.5) +
+                geom_vline(xintercept = 2*31 + 0*30 + feb_days, colour = "wheat4", linetype=3, size=.5) +
+                geom_vline(xintercept = 2*31 + 1*30 + feb_days, colour = "wheat4", linetype=3, size=.5) +
+                geom_vline(xintercept = 3*31 + 1*30 + feb_days, colour = "wheat4", linetype=3, size=.5) +
+                geom_vline(xintercept = 3*31 + 2*30 + feb_days, colour = "wheat4", linetype=3, size=.5) +
+                geom_vline(xintercept = 4*31 + 2*30 + feb_days, colour = "wheat4", linetype=3, size=.5) +
+                geom_vline(xintercept = 4*31 + 3*30 + feb_days, colour = "wheat4", linetype=3, size=.5) +
+                geom_vline(xintercept = 5*31 + 3*30 + feb_days, colour = "wheat4", linetype=3, size=.5) +
+                geom_vline(xintercept = 5*31 + 4*30 + feb_days, colour = "wheat4", linetype=3, size=.5) +
+                geom_vline(xintercept = 6*31 + 4*30 + feb_days, colour = "wheat4", linetype=3, size=.5) +
+                geom_vline(xintercept = 6*31 + 5*30 + feb_days, colour = "wheat4", linetype=3, size=.5) +
+                
+                scale_x_continuous(expand = c(0,0),
+                                   breaks = c(15, 45, 75, 105, 135, 165, 198, 228, 258, 288, 320, 350),
+                                   position = "top",
+                                   labels = c("January", "February", "March", "April",
+                                              "May", "June", "July", "August", "September",
+                                              "October", "November", "December")) +
+                geom_point(data = df_YearXExtremes[df_YearXExtremes$recordLow == "Y", ], 
+                           aes(x = seqDay, y = TempInC), color = "blue3") +
+                geom_point(data = df_YearXExtremes[df_YearXExtremes$recordHigh == "Y", ], 
+                           aes(x = seqDay, y = TempInC), color = "firebrick3") + 
+                
+                ylim(y_minValue, y_maxValue) +
+                
+                labs(x = "", y = expression("Temperature in "*~degree*C)) +
+                
+                annotate("text", label = "Temperature", 
+                         x = 19, y = y_maxValue - 0.5, size = 4, fontface="bold") +
+                annotate("text", x = 68, y = y_maxValue - 2.5, 
+                         label = "Data represents average daily temperatures. Accessible data dates back to", 
+                         size=3, colour="gray30") +
+                annotate("text", x = 63, y = y_maxValue - 4, 
+                         label = "January 1, 1995. Data for 2014 is only available through December 16.", 
+                         size=3, colour="gray30") +
+                annotate("text", x = 67, y = y_maxValue - 5.5, 
+                         label = "Average temperature for the year was 51.9° making 2014 the 9th coldest", 
+                         size=3, colour="gray30") +
+                annotate("text", x = 17, y = y_maxValue - 7, label = "year since 1995", 
+                         size=3, colour="gray30") +
+                
+                ggtitle(paste("Dayton's Weather in ", YearToday))
+        return(p1)
+}
+
+
+
+# not in use
+add_subtext <- function(){
+        
+        gridText <- grid.text("Temperature.....", x = 0, y = 1, 
+                              rot = 0, 
+                              just = "left", vjust = 1)
+        grid::grid.draw(gridText)
+}
+
+
+# not in use
+plot.title = function(plot = NULL, text.1 = NULL, text.2 = NULL, 
+                      size.1 = 12,  size.2 = 12,
+                      col.1 = "black", col.2 = "black", 
+                      face.1 = "plain",  face.2 = "plain") {
+        
+        require(gtable)
+        require(grid)
+        
+        gt = ggplotGrob(plot)
+        
+        text.grob1 = textGrob(text.1, y = unit(.45, "npc"), 
+                              gp = gpar(fontsize = size.1, col = col.1, fontface = face.1))
+        text.grob2 = textGrob(text.2,  y = unit(.65, "npc"), 
+                              gp = gpar(fontsize = size.2, col = col.2, fontface = face.2))
+        
+        text = matrix(list(text.grob1, text.grob2), nrow = 2)
+        text = gtable_matrix(name = "title", grobs = text, 
+                             widths = unit(1, "null"), 
+                             heights = unit.c(unit(1.1, "grobheight", text.grob1) + unit(0.5, "lines"), unit(1.1,  "grobheight", text.grob2) + unit(0.5, "lines")))
+        
+        gt = gtable_add_grob(gt, text, t = 2, l = 4)
+        gt$heights[2] = sum(text$heights)
+        
+        class(gt) =  c("Title", class(gt))
+        
+        gt
+}
+
+# not in use
+# A print method for the plot
+printNewGrid <- function(x) {
+        grid.newpage()   
+        grid.draw(x)
+}
+```
+
+Keep in mind, this is the Weather of Cairo.
+
+```{r}
+p2 <- create_base_plot(PastExtremes, 
+                       DataYearX, 
+                       YearXExtremes, 
+                       YearPastMin, 
+                       YearPastMax, 
+                       YearToday) + 
+        theme_dayton()
+p2
+```
+
