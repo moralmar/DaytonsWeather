@@ -7,60 +7,60 @@
 #    http://shiny.rstudio.com/
 #
 
+remove(list = ls(all.names = TRUE))
+cat("\014")
 
 pkgsName <- c("readr","magrittr","ggplot2","dplyr", "gridExtra", "shiny")
 pkgs <- package(pkgsName)
 lapply(pkgsName, require, character.only = TRUE)
 
 
-# Define server logic required to draw a histogram
 shinyServer(function(input, output) {
-   
-  output$distPlot <- renderPlot({
-    
-    # # generate bins based on input$bins from ui.R
-    # x    <- faithful[, 2] 
-    # bins <- seq(min(x), max(x), length.out = input$bins + 1)
-    # 
-    # # draw the histogram with the specified number of bins
-    # hist(x, breaks = bins, col = 'darkgray', border = 'white')
+        
+        output$values <- renderPrint({
+                list(x4 = input$x4)
+        })
+        
+
+        calc_when_go <- eventReactive(input$go, {
+
+                # CountryABBR <- "EG"; City <- "CAIRO" #ensure: captial letters
+                # CityABBR <- paste0(CountryABBR, City)      
+                CityABBR <- x4
+                # make file name
+                name <- make_filename(CityABBR)
+                
+                # read
+                testfile <- read_and_load(name)
+                (get_FileInfo(testfile, CountryABBR, City))
+                
+                # wrangling
+                YearToday <- input$bins #2014L
+                YearPastMin <- min(testfile$Year)
+                YearPastMax <- YearToday - 1
+                
+                PastData <- get_YearData(testfile, YearPastMin:YearPastMax)
+                DataYearX <- get_YearData(testfile, YearToday)
+                
+                PastExtremes <- get_YearPastExtremes(PastData)
+                head(PastExtremes); tail(PastExtremes)
+                
+                YearXExtremes <- get_ExtremesForYearX(PastExtremes, DataYearX)
+                
+                
+                p2 <- create_base_plot(PastExtremes, 
+                                       DataYearX, 
+                                       YearXExtremes, 
+                                       YearPastMin, 
+                                       YearPastMax, 
+                                       YearToday) + 
+                        theme_dayton()
+        })
+
+        
+        output$distPlot <- renderPlot({
           
-    CountryABBR <- "EG"; City <- "CAIRO" #ensure: captial letters
-    CityABBR <- paste0(CountryABBR, City)      
-    
-    # make file name
-    name <- make_filename(CityABBR)
-    
-    # read
-    testfile <- read_and_load(name)
-    (get_FileInfo(testfile, CountryABBR, City))
-    
-    # wrangling
-    YearToday <- input$bins #2014L
-    YearPastMin <- min(testfile$Year)
-    YearPastMax <- YearToday - 1
-    
-    PastData <- get_YearData(testfile, YearPastMin:YearPastMax)
-    DataYearX <- get_YearData(testfile, YearToday)
-    
-    PastExtremes <- get_YearPastExtremes(PastData)
-    head(PastExtremes); tail(PastExtremes)
-    
-    YearXExtremes <- get_ExtremesForYearX(PastExtremes, DataYearX)
-    
-    p2 <- create_base_plot(PastExtremes, 
-                           DataYearX, 
-                           YearXExtremes, 
-                           YearPastMin, 
-                           YearPastMax, 
-                           YearToday) + 
-            theme_dayton()
-    p2
+        p2
     
   })
-  
-  
-  
-  
-  
 })

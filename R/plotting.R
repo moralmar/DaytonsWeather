@@ -1,6 +1,6 @@
 ################ ~~~~~~~~~~~~~~~~~ ######## ~~~~~~~~~~~~~~~~~ ##################
 ##                                                                            ##
-##                              Daytons Weather                               ## Lilly, next week: exams
+##                              Daytons Weather                               ## Milly, next week: exams
 ##                                                                            ##
 ##                                                                            ##
 ##                              Marco R. Morales                              ##

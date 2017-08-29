@@ -7,6 +7,14 @@
 #    http://shiny.rstudio.com/
 #
 
+
+# interesting regarding Shiny Inputs:
+#  https://shiny.rstudio.com/gallery/option-groups-for-selectize-input.html
+
+
+# interesting regarding buttons:
+# https://shiny.rstudio.com/articles/action-buttons.html
+
 library(shiny)
 
 # Define UI for application that draws a histogram
@@ -18,17 +26,29 @@ shinyUI(fluidPage(
   # Sidebar with a slider input for number of bins 
   sidebarLayout(
     sidebarPanel(
-       sliderInput("bins",
+            
+            # a select input
+            selectInput('x4', 'X4', choices = list(
+                    Egypt = c("Cairo" = "EGCAIRO", `New Jersey` = 'NJ'),
+                    Japan = c("Osaka" = "JPOSAKA", `Washington` = 'WA')
+            ), selectize = FALSE),
+            
+            sliderInput("bins",
                    "Number of bins:",
                    min = as.integer(min(PastData$Year)),#1995,
                    max = as.integer(max(DataYearX$Year)),#2014,
                    value = 2014L,
-                   step = 1)
+                   step = 1),
+            
+            actionButton("goButton", "Go!"),
+            actionButton("reset", "Clear"), 
+            hr()
     ),
     
     # Show a plot of the generated distribution
     mainPanel(
-       plotOutput("distPlot")
+       plotOutput("distPlot"),
+       verbatimTextOutput('values')
     )
   )
 ))

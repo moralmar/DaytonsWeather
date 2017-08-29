@@ -12,6 +12,8 @@ pkgs <- package(pkgsName)
 lapply(pkgsName, require, character.only = TRUE)
 
 CountryABBR <- "EG"; City <- "CAIRO" #ensure: captial letters
+CountryABBR <- "JP"; City <- "OSAKA" #ensure: captial letters
+
 CityABBR <- paste0(CountryABBR, City)
 
 # make file name
