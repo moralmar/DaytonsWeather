@@ -49,9 +49,9 @@ interesting links and sources:
 - ...  
 
 TEXT  
-GAOLs  
-- analysing data  
-- recreating  
+A good text is still missing here. However, a short summary of the project of mine is as follows:  
+- analysing the weather data  
+- recreating the graph you can see below 
 - building shiney app  
 - main features: You can choose the city & You can choose the "years of interest"  
 - visualize all relevant cities on world map  
@@ -161,7 +161,11 @@ lapply(pkgsName, require, character.only = TRUE)
 ## Data - Exploring
 
 TEXT  
-Three functions which makes it easy to load the files
+Three functions which make it easy to load the files:  
+- `make_filename()`  
+- `get_FileInfo()`  
+- `read_and_load()`  
+
 ```{r}
 
 make_filename <- function(CityABBR) {
@@ -198,9 +202,10 @@ read_and_load <- function(finalURL){
 ```
 
 
-So, let's start with the city Cairo in Egypt:  
-- define input  
-- load the file
+So, let's start with the city **Cairo** in **Egypt**:  
+- define input parameters  
+- load the file with the functions you saw above  
+
 ```{r, message=FALSE, warning=FALSE}
 CountryABBR <- "EG"; City <- "CAIRO" #ensure: captial letters
 CityABBR <- paste0(CountryABBR, City)
@@ -223,7 +228,7 @@ I defined the following functions:
 - `get_YearPastExtremes(PastData)`  
 - `get_ExtremesForYearX(PastYearExtremes, DataYearX)`  
 
-They are defined as follows: 
+They help to summarize the data given by the *.csv files. They are defined as follows: 
 
 ```{r}
 get_YearData <- function(data, YearsOfInterest){
@@ -271,11 +276,11 @@ get_ExtremesForYearX <- function(PastYearExtremes, DataYearX){
 So the routine looks like this:
 
 ```{r}
-YearToday <- 2014L
+YearToday   <- 2014L
 YearPastMin <- min(testfile$Year)
 YearPastMax <- YearToday - 1
 
-PastData <- get_YearData(testfile, YearPastMin:YearPastMax)
+PastData  <- get_YearData(testfile, YearPastMin:YearPastMax)
 DataYearX <- get_YearData(testfile, YearToday)
 
 PastExtremes <- get_YearPastExtremes(PastData)
@@ -286,14 +291,13 @@ tail(PastExtremes)
 YearXExtremes <- get_ExtremesForYearX(PastExtremes, DataYearX)
 ```
 
-## Plotting Evolution
+## Evolution of Plots
 
 
-TEXT
+TEXT  
 
-I am not (yet) showing the plotting functions, which I am using...
-(it's just a lot of code....not that interesting)...  
-This is not yet the final product...  
+This is not yet the final product (obvious...duah :)  
+  
 Work in Progress  
 
 ```{r, include=FALSE}
@@ -324,10 +328,7 @@ create_base_plot <- function(City, df_PastExtremes,
                              YearPastMax, 
                              YearToday){
         
-        # n_days <- nrow(df_DataYearX)
-        # feb_days <- ifelse(n_days == 364, 28, 29)
-        # feb_days <- 29
-        
+
         year_current <- max(df_DataYearX$Year) # Year to look at ("current year")
         
         y_maxValue <- plyr::round_any(range(df_PastExtremes$PastHigh)[2], 10, f = ceiling)
@@ -346,62 +347,7 @@ create_base_plot <- function(City, df_PastExtremes,
                                                               ymin = PastAvgLow, 
                                                               ymax = PastAvgHigh),
                                colour = "wheat4")
-                # geom_line(df_DataYearX, mapping = aes(x = seqDay, y = TempInC, group = 1)) +
-                # geom_vline(xintercept = 0, colour = "wheat4", linetype=1, size=1) +
-                # 
-                # geom_hline(yintercept = 0, colour = "white", linetype=1) +
-                # geom_hline(yintercept = 5, colour = "white", linetype=1) +
-                # geom_hline(yintercept = 10, colour = "white", linetype=1) +
-                # geom_hline(yintercept = 15, colour = "white", linetype=1) +
-                # geom_hline(yintercept = 20, colour = "white", linetype=1) +
-                # geom_hline(yintercept = 25, colour = "white", linetype=1) +
-                # geom_hline(yintercept = 30, colour = "white", linetype=1) +
-                # geom_hline(yintercept = 35, colour = "white", linetype=1) +
-                # geom_hline(yintercept = 40, colour = "white", linetype=1) +
-                # 
-                # geom_vline(xintercept = 31, colour = "wheat4", linetype=3, size=.5) +
-                # geom_vline(xintercept = 31 + feb_days, colour = "wheat4", linetype=3, size=.5) +
-                # geom_vline(xintercept = 2*31 + 0*30 + feb_days, colour = "wheat4", linetype=3, size=.5) +
-                # geom_vline(xintercept = 2*31 + 1*30 + feb_days, colour = "wheat4", linetype=3, size=.5) +
-                # geom_vline(xintercept = 3*31 + 1*30 + feb_days, colour = "wheat4", linetype=3, size=.5) +
-                # geom_vline(xintercept = 3*31 + 2*30 + feb_days, colour = "wheat4", linetype=3, size=.5) +
-                # geom_vline(xintercept = 4*31 + 2*30 + feb_days, colour = "wheat4", linetype=3, size=.5) +
-                # geom_vline(xintercept = 4*31 + 3*30 + feb_days, colour = "wheat4", linetype=3, size=.5) +
-                # geom_vline(xintercept = 5*31 + 3*30 + feb_days, colour = "wheat4", linetype=3, size=.5) +
-                # geom_vline(xintercept = 5*31 + 4*30 + feb_days, colour = "wheat4", linetype=3, size=.5) +
-                # geom_vline(xintercept = 6*31 + 4*30 + feb_days, colour = "wheat4", linetype=3, size=.5) +
-                # geom_vline(xintercept = 6*31 + 5*30 + feb_days, colour = "wheat4", linetype=3, size=.5) +
-                # 
-                # scale_x_continuous(expand = c(0,0),
-                #                    breaks = c(15, 45, 75, 105, 135, 165, 198, 228, 258, 288, 320, 350),
-                #                    position = "top",
-                #                    labels = c("January", "February", "March", "April",
-                #                               "May", "June", "July", "August", "September",
-                #                               "October", "November", "December")) +
-                # geom_point(data = df_YearXExtremes[df_YearXExtremes$recordLow == "Y", ], 
-                #            aes(x = seqDay, y = TempInC), color = "blue3") +
-                # geom_point(data = df_YearXExtremes[df_YearXExtremes$recordHigh == "Y", ], 
-                #            aes(x = seqDay, y = TempInC), color = "firebrick3") + 
-                
-                # ylim(y_minValue, y_maxValue) +
-                
-                # labs(x = "", y = expression("Temperature in "*~degree*C)) +
-                
-                # annotate("text", label = "Temperature", 
-                #          x = 19, y = y_maxValue - 0.5, size = 4, fontface="bold") +
-                # annotate("text", x = 68, y = y_maxValue - 2.5, 
-                #          label = "Data represents average daily temperatures. Accessible data dates back to", 
-                #          size=3, colour="gray30") +
-                # annotate("text", x = 63, y = y_maxValue - 4, 
-                #          label = "January 1, 1995. Data for 2014 is only available through December 16.", 
-                #          size=3, colour="gray30") +
-                # annotate("text", x = 67, y = y_maxValue - 5.5, 
-                #          label = "Average temperature for the year was 51.9° making 2014 the 9th coldest", 
-                #          size=3, colour="gray30") +
-                # annotate("text", x = 17, y = y_maxValue - 7, label = "year since 1995", 
-                #          size=3, colour="gray30")
-                
-                # ggtitle(paste0(City, "'s Weather in ", YearToday))
+
         return(p1)
 }
 
@@ -519,7 +465,7 @@ printNewGrid <- function(x) {
 Keep in mind, this is the Weather of Cairo.  
 Here is an evolution of the graph
 
-```{r}
+```{r, fig.height = 10}
 evo2 <- create_base_plot(City, PastExtremes, 
                        DataYearX, 
                        YearXExtremes, 
